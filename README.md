@@ -5,8 +5,8 @@ W codziennej pracy z pythonem zdarzają się sytuacje w której napisany program
 Wymagania do zadań:
 - `python >= 3.6`
 - `multiprocessing` package
-- `threads` package (`pip install threads`)
-- `asyncio` package (`pip install asyncio`)
+- `threads` package
+- `asyncio` package
 
 
 ## Pomiary czsu w pythonie 
@@ -205,6 +205,53 @@ Property `.deamon = True` pozwoli głównemu programowi zakończyć pracę nawet
 >   
 > Zmodyfikuj klasę `SomeWorker` w taki sposób aby wątki cyklicznie wypisywały swoje ID (ustawiane w konstruktorze) i aby możlwie było zakończenie ich działania z poziomu wątku głównego (wykorzystując Queue).
 
-## Programowanie Asynchroniczne (Python Asynchronous Programming)
+## Programowanie Asynchroniczne (Coroutines and Tasks)
 
+Programowanie asynchroniczne jest ostatnim elementem omawianych współbieżności. Biblioteka `asyncio` jest to jednowątkowa wielozadaniowość oparta na pojedynczym procesie dzięki temu rzadziej występują problemy z synchronizacją czy wyścigiem.
 
+W przeciwieństwie do zwykłej funkcji wątku z pojedynczym punktem wyjścia, `coroutine` (korutyna) może wstrzymać i wznowić swoje wykonanie (wykorzystując `await`). Tworzenie korutyny polega na użyciu słowa kluczowego `async` przed deklaracją funkcji. Poniżej zaprezentowana przykład aplikacji asynchronicznej wykorzystującej bibliotekę `asyncio`
+
+```python
+import asyncio
+
+num_word_mapping = {1: 'ONE', 2: 'TWO', 3: "THREE", 4: "FOUR", 5: "FIVE", 6: "SIX", 7: "SEVEN", 8: "EIGHT",
+                   9: "NINE", 10: "TEN"}
+
+async def delay_message(delay, message):
+    logging.info(f"{message} received")
+    await asyncio.sleep(delay) # time.sleep is blocking call. Hence, it cannot be awaited and we have to use asyncio.sleep
+    logging.info(f"Printing {message}")
+    
+async def main():
+    logging.info("Main started")
+    logging.info(f'Current registered tasks: {len(asyncio.all_tasks())}')
+    logging.info("Creating tasks")
+    task_1 = asyncio.create_task(delay_message(2, num_word_mapping[2])) 
+    task_2 = asyncio.create_task(delay_message(3, num_word_mapping[3]))
+    logging.info(f'Current registered tasks: {len(asyncio.all_tasks())}')
+    await task_1 # suspends execution of coroutine and gives control back to event loop while awaiting task completion.
+    await task_2
+    logging.info("Main Ended")
+
+if __name__ == '__main__':
+
+    asyncio.run(main()) # creats an envent loop
+```
+
+```
+07:35:32:MainThread:Main started
+07:35:32:MainThread:Current registered tasks: 1
+07:35:32:MainThread:Creating tasks
+07:35:32:MainThread:Current registered tasks: 3
+07:35:32:MainThread:TWO received
+07:35:32:MainThread:THREE received
+07:35:34:MainThread:Printing TWO
+07:35:35:MainThread:Printing THREE
+07:35:35:MainThread:Main Ended
+```
+
+Uzyskano tą samą funkcjonalność co w przypadku użycia biblioteki `threading`. W tym przypadku została zbudowana jednowątkowa aplikacja wykorzystująca tzw. Event Loop i korutyny dające możliwości uruchomienia współbieżnego kodu. Do komunikacji pomiędzy korutynami wykorzystuje się obiekt `asyncio.Queue`, natomiast do synchronizacji `asyncio.Lock` czy `asyncio.Event`.
+
+> Zadanie (2 pkt):  
+>   
+> Zmodyfikuj powyższy program w którym czas opóźnienia jest losowany z przedziały 0-4 sekund. Uruchom 100 korutyn i udowodnij poprawne działanie programu. (Tip: do "zebrania" 100 korutyn wykorzystaj asyncio.gather())
