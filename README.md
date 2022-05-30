@@ -57,11 +57,11 @@ def linear_search(mylist, find):
     return False
     
 SETUP_CODE = '''from __main__ import linear_search
-                from random import randint'''
+from random import randint'''
 
 TEST_CODE = '''mylist = [x for x in range(10000)]
-               find = randint(0, len(mylist))
-               linear_search(mylist, find)'''
+find = randint(0, len(mylist))
+linear_search(mylist, find)'''
 
 # timeit.repeat statement
 times = timeit.timeit(setup = SETUP_CODE,
